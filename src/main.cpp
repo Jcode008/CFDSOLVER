@@ -47,11 +47,11 @@ int main() {
 
 
     //-------------------------
-    // 2. Fluid Properties
+    // 2. Fluid Properties (Modified for comparison)
     //-------------------------
-    double rho = 1.0;    // Density (kg/m³)
-    double nu  = 2e-4;   // Kinematic viscosity - Re = U*c/nu = 5*0.4/2e-4 = 10,000
-    double U_infty = 5.0; // Freestream velocity (m/s)
+    double rho = 1.225;        // Air density at sea level (kg/m³)
+    double nu  = 1.0e-5;       // Modified kinematic viscosity (m²/s) for comparison
+    double U_infty = 65.0;     // Freestream velocity: 65 m/s for comparison
 
     //-------------------------
     // 3. Field Initialization
@@ -70,10 +70,10 @@ int main() {
     double m = 0.02;      // Max camber (2%)
     double p = 0.4;       // Position of max camber (40% chord)
     double t = 0.12;      // Max thickness (12% chord)
-    double chord = 0.6;   // 0.6m chord length (60 grid cells)
+    double chord = 0.6;   // 0.6m chord length
     double x_le = 0.6;    // Leading edge at x=0.6m
     double y_c = 1.0;     // Centered vertically at y=1.0m
-    double alpha = 0.0;   // Angle of attack (degrees) - 5° for good lift
+    double alpha = 0.0;   // Angle of attack: 0° (level flight)
     
     // Create airfoil using existing NACA function
     grid.setAirfoilMask(m, p, t, x_le, y_c, chord, alpha);
@@ -88,8 +88,9 @@ int main() {
     
     std::cout << "NACA " << int(m*100) << int(p*10) << int(t*100) 
               << " airfoil created at alpha=" << alpha << "°" << std::endl;
-    std::cout << "Chord = " << chord << "m, Reynolds number = " 
-              << U_infty*chord/nu << std::endl;
+    std::cout << "Chord = " << chord << "m, Velocity = " << U_infty << " m/s (100 knots)" << std::endl;
+    std::cout << "Reynolds number = " << U_infty*chord/nu << std::endl;
+    std::cout << "Air conditions: ρ=" << rho << " kg/m³, ν=" << nu << " m²/s (ISA sea level)" << std::endl;
     std::cout << "Solid cells: " << solid_count << " / " << (nx*ny) << std::endl;
 
     //-------------------------
@@ -101,8 +102,8 @@ int main() {
     //-------------------------
     // 6. Time Stepping Loop
     //-------------------------
-    int nt = 2500; // Reduced timesteps for finer grid (same physical time)
-    int snapshotInterval = 100; // Save every 100 steps (same number of snapshots)
+    int nt = 5000; // Longer run for fully developed flow (0.0625s physical time)
+    int snapshotInterval = 50; // Save every 50 steps (100 snapshots for smooth animation)
 
     for(int n = 0; n<nt; n++){
         if (n % 50 == 0) std::cout << "Starting timestep " << n << std::endl;
