@@ -42,7 +42,7 @@
 
 int main() {
     double Lx = 4.0, Ly = 2.0; //Domain size - smaller, taller domain
-    int nx = 800, ny = 400;    // DOUBLED resolution for better airfoil resolution
+    int nx = 100, ny = 50;    // DOUBLED resolution for better airfoil resolution
     Grid grid(nx, ny, Lx, Ly);
 
 
@@ -50,7 +50,7 @@ int main() {
     // 2. Fluid Properties (Modified for comparison)
     //-------------------------
     double rho = 1.225;        // Air density at sea level (kg/m³)
-    double nu  = 1.0e-5;       // Modified kinematic viscosity (m²/s) for comparison
+    double nu  = 1e-05;       // Modified kinematic viscosity (m²/s) for comparison
     double U_infty = 65.0;     // Freestream velocity: 65 m/s for comparison
 
     //-------------------------

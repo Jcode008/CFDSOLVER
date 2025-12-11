@@ -8,8 +8,17 @@ import matplotlib.animation as animation
 import os
 import glob
 
-# Setup
-build_dir = r'C:\Users\graha\CFDSolver\build\Release'
+# Setup - use current directory or find build dir
+if os.path.exists('u_0.csv'):
+    build_dir = '.'
+elif os.path.exists('build'):
+    build_dir = 'build'
+elif os.path.exists('../build'):
+    build_dir = '../build'
+else:
+    build_dir = '.'
+
+print(f"Working directory: {os.path.abspath(build_dir)}")
 print("Creating flow animation from Cartesian grid data...")
 
 # Find timesteps
@@ -137,8 +146,9 @@ def animate(frame):
 
 # Create animation
 print(f"\nGenerating animation with {len(timesteps)} frames...")
+print("Note: This will take several minutes. Be patient!")
 anim = animation.FuncAnimation(fig, animate, frames=len(timesteps), 
-                               interval=150, blit=True, repeat=True)
+                               interval=150, blit=False, repeat=True)
 
 # Save
 output_path = os.path.join(build_dir, 'flow_animation_100kts.gif')

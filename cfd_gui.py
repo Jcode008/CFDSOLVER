@@ -25,7 +25,11 @@ class CFDSolverGUI:
         
         # Set up paths
         self.base_dir = Path(__file__).parent
-        self.build_dir = self.base_dir / "build" / "Release"
+        # On Linux, executables are in build/ not build/Release/
+        if sys.platform == 'win32':
+            self.build_dir = self.base_dir / "build" / "Release"
+        else:
+            self.build_dir = self.base_dir / "build"
         self.src_dir = self.base_dir / "src"
         self.analysis_dir = self.base_dir / "analysis"
         
@@ -428,6 +432,28 @@ class CFDSolverGUI:
         
         def run_thread():
             try:
+                # Ensure build directory exists and is configured
+                build_path = self.base_dir / "build"
+                if not build_path.exists() or not (build_path / "CMakeCache.txt").exists():
+                    self.log_console("Configuring CMake...\n")
+                    cmake_config = subprocess.run(
+                        ["cmake", "-S", ".", "-B", "build", "-DCMAKE_BUILD_TYPE=Release"],
+                        cwd=str(self.base_dir),
+                        capture_output=True,
+                        text=True
+                    )
+                    self.log_console(cmake_config.stdout)
+                    if cmake_config.returncode != 0:
+                        self.log_console(cmake_config.stderr)
+                        self.log_console("\n✗ CMake configuration failed!")
+                        self.status_label.config(text="Configuration Failed", foreground='red')
+                        self.running = False
+                        self.run_btn.config(state=tk.NORMAL)
+                        self.stop_btn.config(state=tk.DISABLED)
+                        self.progress.stop()
+                        return
+                    self.log_console("✓ CMake configured!\n")
+                
                 # Step 1: Build
                 self.log_console("Step 1: Building solver...\n")
                 build_cmd = ["cmake", "--build", "build", "--config", "Release", "--target", "CFDSolver"]
@@ -461,7 +487,9 @@ class CFDSolverGUI:
                 self.log_console("Step 2: Running simulation...\n")
                 self.status_label.config(text="Running Simulation...", foreground='blue')
                 
-                exe_path = self.build_dir / "CFDSolver.exe"
+                # Platform-specific executable name
+                exe_name = "CFDSolver.exe" if sys.platform == 'win32' else "CFDSolver"
+                exe_path = self.build_dir / exe_name
                 
                 self.process = subprocess.Popen(
                     [str(exe_path)],
@@ -600,8 +628,10 @@ class CFDSolverGUI:
         if img_path.exists():
             if sys.platform == 'win32':
                 os.startfile(str(img_path))
+            elif sys.platform == 'darwin':
+                subprocess.run(['open', str(img_path)])
             else:
-                webbrowser.open(str(img_path))
+                subprocess.run(['xdg-open', str(img_path)])
         else:
             messagebox.showwarning("Not Found", "Analysis image not generated yet")
     
@@ -611,8 +641,10 @@ class CFDSolverGUI:
         if gif_path.exists():
             if sys.platform == 'win32':
                 os.startfile(str(gif_path))
+            elif sys.platform == 'darwin':
+                subprocess.run(['open', str(gif_path)])
             else:
-                webbrowser.open(str(gif_path))
+                subprocess.run(['xdg-open', str(gif_path)])
         else:
             messagebox.showwarning("Not Found", "Animation not generated yet")
     
@@ -740,10 +772,15 @@ class CFDSolverGUI:
 def main():
     root = tk.Tk()
     
-    # Try to use modern theme
+    # Try to use modern theme based on platform
     try:
         style = ttk.Style()
-        style.theme_use('vista')  # Windows modern theme
+        if sys.platform == 'win32':
+            style.theme_use('vista')  # Windows modern theme
+        elif sys.platform == 'darwin':
+            style.theme_use('aqua')   # macOS theme
+        else:
+            style.theme_use('clam')   # Linux theme
     except:
         pass
     

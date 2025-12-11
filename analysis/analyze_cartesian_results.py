@@ -5,14 +5,45 @@ Creates comprehensive visualization and computes aerodynamic coefficients
 import numpy as np
 import matplotlib.pyplot as plt
 import os
+import glob
 
-# Setup
-build_dir = r'C:\Users\graha\CFDSolver\build\Release'
+# Setup - use current directory or find build dir
+if os.path.exists('u_0.csv'):
+    build_dir = '.'
+elif os.path.exists('build'):
+    build_dir = 'build'
+elif os.path.exists('../build'):
+    build_dir = '../build'
+else:
+    build_dir = '.'
+
+print(f"Working directory: {os.path.abspath(build_dir)}")
 print("Analyzing Cartesian grid simulation results...\n")
 
-# Simulation parameters
+# Find latest timestep
+u_files = glob.glob(os.path.join(build_dir, 'u_*.csv'))
+timesteps = []
+for f in u_files:
+    fname = os.path.basename(f)
+    try:
+        step = int(fname[2:-4])
+        timesteps.append(step)
+    except:
+        pass
+
+if not timesteps:
+    print("ERROR: No data files found!")
+    exit(1)
+
+final_step = max(timesteps)
+print(f"Found {len(timesteps)} timesteps, analyzing latest: {final_step}")
+
+# Load first file to get dimensions
+u_temp = np.genfromtxt(os.path.join(build_dir, f'u_{final_step}.csv'), delimiter=',')
+ny, nx = u_temp.shape
+
+# Simulation parameters (read from data dimensions)
 Lx, Ly = 4.0, 2.0
-nx, ny = 800, 400
 rho = 1.225  # kg/m³
 U_infty = 51.44  # m/s (100 knots)
 chord = 0.6  # m
@@ -26,9 +57,8 @@ dx = Lx / (nx - 1)
 dy = Ly / (ny - 1)
 
 # Load final timestep
-final_step = 4950
 print(f"Loading timestep {final_step}...")
-u = np.genfromtxt(os.path.join(build_dir, f'u_{final_step}.csv'), delimiter=',')
+u = u_temp
 v = np.genfromtxt(os.path.join(build_dir, f'v_{final_step}.csv'), delimiter=',')
 p = np.genfromtxt(os.path.join(build_dir, f'p_{final_step}.csv'), delimiter=',')
 
